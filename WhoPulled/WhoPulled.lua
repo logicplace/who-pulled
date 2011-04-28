@@ -222,39 +222,40 @@ end
 
 function WhoPulled_PullBlah(wplayer,enemy,msg)
 	local iggy = 1;
-
-	if(not WhoPulled_GUIDs[enemy[1]]) then
-		WhoPulled_GUIDs[enemy[1]] = true;
-		WhoPulled_MobToPlayer[enemy[2]] = wplayer;
-		WhoPulled_LastMob = enemy[2];
-		local wp_tanks = strreplace(WhoPulled_Tanks, " - ", "-");
-		WhoPulled_Tanks = wp_tanks; 
-		if (not WhoPulled_Settings["silent"]) then 
-			if(WhoPulled_Settings["yonboss"]) then 
-				local i,boss;
-				i = 1;
-				while(UnitExists("boss"..i)) do
-					if(UnitName("boss"..i) == enemy[2]) then 
-						for i=1, #WhoPulled_Ignored do
-							if strlower(WhoPulled_Ignored[i]) == strlower(enemy[2]) then iggy = 2; end
-						end
-						if(not string.find(WhoPulled_Tanks,wplayer,1,true) and iggy == 1) then
-							if(UnitInRaid("player") and WhoPulled_Settings["rwonboss"] and (IsRaidOfficer() or IsRaidLeader())) then 
-								WhoPulled_RaidWarning(enemy[2]);
-							else
-								WhoPulled_Yell(enemy[2]);
+	if(GetNumPartyMembers() > 0) then -- added to make it silent when soloing no matter what(qod)
+		if(not WhoPulled_GUIDs[enemy[1]]) then
+			WhoPulled_GUIDs[enemy[1]] = true;
+			WhoPulled_MobToPlayer[enemy[2]] = wplayer;
+			WhoPulled_LastMob = enemy[2];
+			local wp_tanks = strreplace(WhoPulled_Tanks, " - ", "-");
+			WhoPulled_Tanks = wp_tanks;
+			if (not WhoPulled_Settings["silent"]) then
+				if(WhoPulled_Settings["yonboss"]) then
+					local i,boss;
+					i = 1;
+					while(UnitExists("boss"..i)) do
+						if(UnitName("boss"..i) == enemy[2]) then
+							for i=1, #WhoPulled_Ignored do
+								if strlower(WhoPulled_Ignored[i]) == strlower(enemy[2]) then iggy = 2; end
 							end
+							if(not string.find(WhoPulled_Tanks,wplayer,1,true) and iggy == 1) then
+								if(UnitInRaid("player") and WhoPulled_Settings["rwonboss"] and (IsRaidOfficer() or IsRaidLeader())) then 
+									WhoPulled_RaidWarning(enemy[2]);
+								else
+									WhoPulled_Yell(enemy[2]);
+								end
+							end
+							break;
 						end
-						break;
+						i = i+1;
 					end
-					i = i+1;
-				end
-			else
-				for i=1, #WhoPulled_Ignored do
-					if strlower(WhoPulled_Ignored[i]) == strlower(enemy[2]) then iggy = 2; end
-				end
-				if(iggy == 1 and not strfind(WhoPulled_Tanks,wplayer,1,true)) then
-					DEFAULT_CHAT_FRAME:AddMessage(msg);
+				else
+					for i=1, #WhoPulled_Ignored do
+						if strlower(WhoPulled_Ignored[i]) == strlower(enemy[2]) then iggy = 2; end
+					end
+					if(iggy == 1 and not strfind(WhoPulled_Tanks,wplayer,1,true)) then
+						DEFAULT_CHAT_FRAME:AddMessage(msg);
+					end
 				end
 			end
 		end
@@ -394,12 +395,17 @@ function WhoPulled_IgnoreddSpell(spell)
 	end
 	return false;
 end
+function WhoTaunted:CombatLog(self, event, ...)
+
+	local subevent, hideCaster, srcGUID, srcname, srcflags, dstGUID, dstname, dstflags, spellID, spellname, spellschool, extraspellID, extraspellname, extraspellschool, auratype = select(1, ...);
+	WhoTaunted:DisplayTaunt(subevent, srcname, spellID, dstname, extraspellID);
+end
 
 function WhoPulled_CheckWho(...)
-	local time,event,sguid,sname,sflags,dguid,dname,dflags,arg1,arg2,arg3,itype;
+	local time,event,hidecaster,sguid,sname,sflags,dguid,dname,dflags,arg1,arg2,arg3,itype;
 	
 	if(IsInInstance()) then
-		time,event,sguid,sname,sflags,dguid,dname,dflags,arg1,arg2,arg3 = ...;
+		time,event,hidecaster,sguid,sname,sflags,dguid,dname,dflags,arg1,arg2,arg3 = select(1, ...);
 		if(dname and sname and dname ~= sname and not string.find(event,"_RESURRECT") and not string.find(event,"_CREATE") and (string.find(event,"SWING") or string.find(event,"RANGE") or string.find(event,"SPELL"))) then
 			if(not string.find(event,"_SUMMON")) then
 				if(bit.band(sflags,COMBATLOG_OBJECT_TYPE_PLAYER) ~= 0 and bit.band(dflags,COMBATLOG_OBJECT_TYPE_NPC) ~= 0) then
@@ -687,13 +693,12 @@ end
 
 function WhoPulled_World()
 
-        local WhoPulled_variablesLoaded
+        local i,i2,found,v2,t,WhoPulled_variablesLoaded;
         if(WhoPulled_variablesLoaded == nil) then
             WhoPulled_variablesLoaded = false
         end
 		if ( not WhoPulled_variablesLoaded ) then
 			if(WhoPulled_Ignore ~= nil) then
-				local i,i2,found,v2,t;
 				t = WhoPulled_Ignore;
 				found = 1
 				for i2,v2 in pairs(t) do
@@ -706,10 +711,34 @@ function WhoPulled_World()
 						tinsert(WhoPulled_Ignored, i2)
 					end
 				end
-				wipe(WhoPulled_Ignore)
-				table.sort(WhoPulled_Ignored)
-				WhoPulled_variablesLoaded = true
 			end
+			found = 1 -- Healing Stream, Flametongue, and Bloodworms mandatory ignore(qod)
+			for i=1, #WhoPulled_Ignored do
+				if WhoPulled_Ignored[i] == "Healing Stream Totem" then found = 2
+				end
+			end
+			if found == 1 then
+				tinsert(WhoPulled_Ignored, "Healing Stream Totem")
+			end
+			found = 1
+			for i=1, #WhoPulled_Ignored do
+				if WhoPulled_Ignored[i] == "Bloodworm" then found = 2
+				end
+			end
+			if found == 1 then
+				tinsert(WhoPulled_Ignored, "Bloodworm")
+			end
+			found = 1
+			for i=1, #WhoPulled_Ignored do
+				if WhoPulled_Ignored[i] == "Flametongue Totem" then found = 2
+				end
+			end
+			if found == 1 then
+				tinsert(WhoPulled_Ignored, "Flametongue Totem")
+			end -- end of mandatory ignore items
+			wipe(WhoPulled_Ignore)
+			table.sort(WhoPulled_Ignored)
+			WhoPulled_variablesLoaded = true
 		end
 	local text
 	for i=1, #WhoPulled_Ignored do
