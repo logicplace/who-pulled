@@ -1,3 +1,38 @@
+V1.0.13
+* toc bump
+
+V1.0.12
+* toc bump
+
+V1.0.11
+* toc bump
+
+V1.0.10
+* toc bump
+
+V1.0.9
+* toc bump
+
+V1.0.8
+* minor changes to make compatible with 5.x
+
+V1.0.7
+* toc bump
+
+V1.0.6
+* Addressed changes to Combat_Log_Event_Unfiltered and strreplace. 
+ 
+V1.0.5a
+* Fixed table wipe issue
+
+V1.0.5
+* Bugfix
+
+V1.0.4 Release
+* Patched combatlog parsing issue
+* Forced silence when solo in a dungeon
+* Added Bloodworms and 2 pesky totems to the ignore list
+
 V1.0.3 Release
 * Added GUI options, found in Interface/Addons panel.
 * Added "Devout Follower" from final boss in Stonecore and many critters found in dungeons to the default ignore list.

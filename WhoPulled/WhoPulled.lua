@@ -7,6 +7,7 @@ WhoPulled_RageList = {};
 WhoPulled_NotifiedOf = {};
 WhoPulled_Settings = {};
 WhoPulled_RageList = {};
+WhoPulled_Ignore = {};
 WhoPulled_Ignored = {
 	"Adder",
 	"Arctic Hare",
@@ -222,12 +223,12 @@ end
 
 function WhoPulled_PullBlah(wplayer,enemy,msg)
 	local iggy = 1;
-	if(GetNumPartyMembers() > 0) then -- added to make it silent when soloing no matter what(qod)
+	if(GetNumGroupMembers(LE_PARTY_CATEGORY_HOME) > 0) or (GetNumGroupMembers(LE_PARTY_CATEGORY_INSTANCE) > 0) then -- added to make it silent when soloing no matter what(qod)
 		if(not WhoPulled_GUIDs[enemy[1]]) then
 			WhoPulled_GUIDs[enemy[1]] = true;
 			WhoPulled_MobToPlayer[enemy[2]] = wplayer;
 			WhoPulled_LastMob = enemy[2];
-			local wp_tanks = strreplace(WhoPulled_Tanks, " - ", "-");
+			local wp_tanks = string.gsub(WhoPulled_Tanks, "%s%-%s", "-");
 			WhoPulled_Tanks = wp_tanks;
 			if (not WhoPulled_Settings["silent"]) then
 				if(WhoPulled_Settings["yonboss"]) then
@@ -239,7 +240,7 @@ function WhoPulled_PullBlah(wplayer,enemy,msg)
 								if strlower(WhoPulled_Ignored[i]) == strlower(enemy[2]) then iggy = 2; end
 							end
 							if(not string.find(WhoPulled_Tanks,wplayer,1,true) and iggy == 1) then
-								if(UnitInRaid("player") and WhoPulled_Settings["rwonboss"] and (IsRaidOfficer() or IsRaidLeader())) then 
+								if(UnitInRaid("player") and WhoPulled_Settings["rwonboss"] and (UnitIsGroupAssistant() or UnitIsGroupLeader())) then 
 									WhoPulled_RaidWarning(enemy[2]);
 								else
 									WhoPulled_Yell(enemy[2]);
@@ -299,86 +300,110 @@ function WhoPulled_ScanForPets()
 end
 
 function WhoPulled_ScanMembersSub(combo)
-	local name,serv;
-	name,serv = WhoPulled_GetNameServ(combo);
-	if(name and WhoPulled_RageList[serv] and WhoPulled_RageList[serv][name] and not WhoPulled_NotifiedOf[name.."-"..serv]) then
-		DEFAULT_CHAT_FRAME:AddMessage(name.." who pulled "..WhoPulled_RageList[serv][name].." against your team is in this team!");
-		WhoPulled_NotifiedOf[name.."-"..serv] = true;
+	local wpname,wpserv;
+	wpname,wpserv = WhoPulled_GetNameServ(combo);
+	if(wpname and WhoPulled_RageList[wpserv] and WhoPulled_RageList[wpserv][wpname] and not WhoPulled_NotifiedOf[wpname.."-"..wpserv]) then
+		DEFAULT_CHAT_FRAME:AddMessage(wpname.." who pulled "..WhoPulled_RageList[wpserv][wpname].." against your team is in this team!");
+		WhoPulled_NotifiedOf[wpname.."-"..wpserv] = true;
 	end
 end
 
 function WhoPulled_ScanMembers()
-	local num,name,wpplayer,wprole,WhoPulled_Tankappend;
+	local num,num1,wpname,wpplayer,wprole,WhoPulled_Tankappend;
 	if(UnitInRaid("player")) then 
-		num=GetNumRaidMembers();
-		while num>0 do
-			name=GetUnitName("raid"..num,1,true);
+		num=GetNumGroupMembers(LE_PARTY_CATEGORY_HOME);
+		num1=GetNumGroupMembers(LE_PARTY_CATEGORY_INSTANCE);
+		if (num < num1) then 
+			num = num1;
+		end
+		while num > 0 do
+			wpname=GetUnitName("raid"..num,1,true);
 			wprole = UnitGroupRolesAssigned("raid"..num);
 			if(wprole == "TANK") then
-				WhoPulled_Tankappend = WhoPulled_Tanks.." "..name;
+				WhoPulled_Tankappend = WhoPulled_Tanks.." "..wpname;
 				WhoPulled_Tanks = WhoPulled_Tankappend;
-				local wp_tanks = strreplace(WhoPulled_Tanks, " - ", "-");
+				local wp_tanks = string.gsub(WhoPulled_Tanks, "%s%-%s", "-");
 				WhoPulled_Tanks = wp_tanks;
-				if(not string.find(WhoPulled_Tanks,name,1,true)) then
-					WhoPulled_Tankappend = WhoPulled_Tanks.." "..name;
+				if(not string.find(WhoPulled_Tanks,wpname,1,true)) then
+					WhoPulled_Tankappend = WhoPulled_Tanks.." "..wpname;
 					WhoPulled_Tanks = WhoPulled_Tankappend;
 				else
 				end
 			elseif GetPartyAssignment("MAINTANK", "raid"..num) then
-				if(not string.find(WhoPulled_Tanks,name,1,true)) then 
-					WhoPulled_Tankappend = WhoPulled_Tanks.." "..name;
+				if(not string.find(WhoPulled_Tanks,wpname,1,true)) then 
+					WhoPulled_Tankappend = WhoPulled_Tanks.." "..wpname;
 					WhoPulled_Tanks = WhoPulled_Tankappend;
 				else 
 				end
 
 			else
-				if string.find(WhoPulled_Tanks,name,1,true) then
-					wp_tanks = strreplace(WhoPulled_Tanks, name, "");
+				if string.find(WhoPulled_Tanks,wpname,1,true) then
+					wp_tanks = string.gsub(WhoPulled_Tanks, wpname, "");
 					WhoPulled_Tanks = wp_tanks;
 				else
 				
 				end
 			
 			end
-		WhoPulled_ScanMembersSub(name);
+		WhoPulled_ScanMembersSub(wpname);
 		num = num-1;
 		end
 	else
-		num=GetNumPartyMembers();
+		num=GetNumGroupMembers(LE_PARTY_CATEGORY_HOME);
+		num1=GetNumGroupMembers(LE_PARTY_CATEGORY_INSTANCE);
+		if (num < num1) then 
+			num = num1;
+		end
 		while num > 0 do
-			name=GetUnitName("party"..num,true);
-			wprole = UnitGroupRolesAssigned("party"..num);
+			num = num - 1;
+			if wpname == nil then wpname = "Unknown" end
+			if num > 0 then
+				wpname = GetUnitName("party"..num,true);
+				wprole = UnitGroupRolesAssigned("party"..num);
+				if(wprole == "TANK") then
+					local wp_tanks = string.gsub(WhoPulled_Tanks, "%s%-%s", "-");
+					WhoPulled_Tanks = wp_tanks; 
+					if(not string.find(WhoPulled_Tanks,wpname,1,true)) then 
+						WhoPulled_Tankappend = WhoPulled_Tanks.." "..wpname; 
+						WhoPulled_Tanks = WhoPulled_Tankappend; 
+					else 
+					end
+				else 
+					if string.find(WhoPulled_Tanks,wpname,1,true) then 
+						local wp_tanks = string.gsub(WhoPulled_Tanks, wpname, "");
+						WhoPulled_Tanks = wp_tanks; 
+					end
+				end
+			end
+			wpname = UnitName("player");
+			wprole = UnitGroupRolesAssigned(wpname);
 			if(wprole == "TANK") then
-				local wp_tanks = strreplace(WhoPulled_Tanks, " - ", "-"); 
+				local wp_tanks = string.gsub(WhoPulled_Tanks, "%s%-%s", "-");
 				WhoPulled_Tanks = wp_tanks; 
-				if(not string.find(WhoPulled_Tanks,name,1,true)) then 
-					WhoPulled_Tankappend = WhoPulled_Tanks.." "..name; 
+				if(not string.find(WhoPulled_Tanks,wpname,1,true)) then 
+					WhoPulled_Tankappend = WhoPulled_Tanks.." "..wpname; 
 					WhoPulled_Tanks = WhoPulled_Tankappend; 
 				else 
 				end
 			else 
-				if string.find(WhoPulled_Tanks,name,1,true) then 
-					local wp_tanks = strreplace(WhoPulled_Tanks, name, "");
+				if string.find(WhoPulled_Tanks,wpname,1,true) then 
+					local wp_tanks = string.gsub(WhoPulled_Tanks, wpname, "");
 					WhoPulled_Tanks = wp_tanks; 
 				end
-
-
 			end
-		WhoPulled_ScanMembersSub(name);
-		num = num - 1;
 		end
+		WhoPulled_ScanMembersSub(wpname);
 		wpplayer = UnitName("player"); 
 		wprole = UnitGroupRolesAssigned(wpplayer);
 		if(wprole == "TANK") then
-			local wp_tanks = strreplace(WhoPulled_Tanks, " - ", "-"); 
+				local wp_tanks = string.gsub(WhoPulled_Tanks, "%s%-%s", "-");
 			WhoPulled_Tanks = wp_tanks; 
 			if(not string.find(WhoPulled_Tanks,wpplayer,1,true)) then
 				WhoPulled_Tankappend = WhoPulled_Tanks.." "..wpplayer; 
 				WhoPulled_Tanks = WhoPulled_Tankappend;
 			else 
 			end
-		else 
-			
+		else 	
 		end
 	end
 end
@@ -395,17 +420,12 @@ function WhoPulled_IgnoreddSpell(spell)
 	end
 	return false;
 end
-function WhoTaunted:CombatLog(self, event, ...)
-
-	local subevent, hideCaster, srcGUID, srcname, srcflags, dstGUID, dstname, dstflags, spellID, spellname, spellschool, extraspellID, extraspellname, extraspellschool, auratype = select(1, ...);
-	WhoTaunted:DisplayTaunt(subevent, srcname, spellID, dstname, extraspellID);
-end
 
 function WhoPulled_CheckWho(...)
-	local time,event,hidecaster,sguid,sname,sflags,dguid,dname,dflags,arg1,arg2,arg3,itype;
+	local time,event,hidecaster,sguid,sname,sflags,sraidflags,dguid,dname,dflags,draidflags,arg1,arg2,arg3,itype;
 	
 	if(IsInInstance()) then
-		time,event,hidecaster,sguid,sname,sflags,dguid,dname,dflags,arg1,arg2,arg3 = select(1, ...);
+		time,event,hidecaster,sguid,sname,sflags,sraidflags,dguid,dname,dflags,draidflags,arg1,arg2,arg3 = select(1, ...);
 		if(dname and sname and dname ~= sname and not string.find(event,"_RESURRECT") and not string.find(event,"_CREATE") and (string.find(event,"SWING") or string.find(event,"RANGE") or string.find(event,"SPELL"))) then
 			if(not string.find(event,"_SUMMON")) then
 				if(bit.band(sflags,COMBATLOG_OBJECT_TYPE_PLAYER) ~= 0 and bit.band(dflags,COMBATLOG_OBJECT_TYPE_NPC) ~= 0) then
@@ -445,17 +465,17 @@ end
 
 function WhoPulled_GetNameServ(combo)
 	if not combo then return nil; end
-	local name,serv = combo:match("([^%- ]+)%-?(.*)");
-	if(name == "") then return nil,nil; end
-	if(serv == "") then
-		serv = GetRealmName();
-		if not serv then serv = ""; end --whatever
+	local wpname,wpserv = combo:match("([^%- ]+)%-?(.*)");
+	if(wpname == "") then return nil,nil; end
+	if(wpserv == "") then
+		wpserv = GetRealmName();
+		if not wpserv then wpserv = ""; end --whatever
 	end
-	return name,serv;
+	return wpname,wpserv;
 end
 
 function WhoPulled_NameOrTarget(combo)
-	if(name == "%t") then return UnitName("playertarget");
+	if(wpname == "%t") then return UnitName("playertarget");
 	else return combo;
 	end
 end
@@ -502,8 +522,9 @@ function WhoPulled_CLI(line)
 			WhoPulled_Settings["silent"] = false;
 			DEFAULT_CHAT_FRAME:AddMessage("Silent mode: off");
 		end
-	elseif(comm == "cleartanks")then
+	elseif(comm == "cleartanks" or comm == "ct")then
 		WhoPulled_OnLeaveParty();
+		DEFAULT_CHAT_FRAME:AddMessage("Tank list cleared");
 	elseif(comm == "tank" or comm == "tanks") then
 		line = WhoPulled_NameOrTarget(line);
 		WhoPulled_Tanks = " "..line.." ";
@@ -512,24 +533,24 @@ function WhoPulled_CLI(line)
 	elseif(comm == "rage") then
 		line = WhoPulled_NameOrTarget(line);
 		if(WhoPulled_MobToPlayer[line]) then
-			local name,serv = WhoPulled_GetNameServ(WhoPulled_MobToPlayer[line]);
-			if not WhoPulled_RageList[serv] then WhoPulled_RageList[serv] = {}; end
-			WhoPulled_RageList[serv][name] = line;
-			DEFAULT_CHAT_FRAME:AddMessage("Your rage for "..name.." from "..serv.." for pulling "..line.." is now set in stone. You will be reminded should they ever join your party again.");
+			local wpname,wpserv = WhoPulled_GetNameServ(WhoPulled_MobToPlayer[line]);
+			if not WhoPulled_RageList[wpserv] then WhoPulled_RageList[wpserv] = {}; end
+			WhoPulled_RageList[wpserv][wpname] = line;
+			DEFAULT_CHAT_FRAME:AddMessage("Your rage for "..wpname.." from "..wpserv.." for pulling "..line.." is now set in stone. You will be reminded should they ever join your party again.");
 		else
 			DEFAULT_CHAT_FRAME:AddMessage("No one pulled a "..line..".");
 		end
 	elseif(comm == "forgive") then -- needs testing, doesn't look right
-		local name,serv = WhoPulled_GetNameServ(line);
-		if(name) then
+		local wpname,wpserv = WhoPulled_GetNameServ(line);
+		if(wpname) then
 			local i,v,x;
-			WhoPulled_RageList[serv][name] = nil;
+			WhoPulled_RageList[wpserv][wpname] = nil;
 			x=0;
-			for i,v in pairs(WhoPulled_RageList[serv]) do
+			for i,v in pairs(WhoPulled_RageList[wpserv]) do
 				x=x+1;
 			end
-			if(x == 0) then WhoPulled_RageList[serv] = nil; end
-			DEFAULT_CHAT_FRAME:AddMessage("You have decided to give "..name.." of "..serv.." a second chance.");
+			if(x == 0) then WhoPulled_RageList[wpserv] = nil; end
+			DEFAULT_CHAT_FRAME:AddMessage("You have decided to give "..wpname.." of "..wpserv.." a second chance.");
 		else
 			DEFAULT_CHAT_FRAME:AddMessage("You have nothing against that player anyway.");
 		end
@@ -579,7 +600,9 @@ function WhoPulled_CLI(line)
 			end
 		end
 		WPIgnoreEditBox:SetText(text or "");
-	elseif(comm == "help")then
+	elseif(comm == "showtanks" or comm == "st") then
+		DEFAULT_CHAT_FRAME:AddMessage("Tanks are set to: "..WhoPulled_Tanks);
+	elseif(comm == "help") then
 		line = strlower(line);
 		if(line == "clear") then
 			DEFAULT_CHAT_FRAME:AddMessage("Clears stored data on who pulled what for this session.");
@@ -651,22 +674,22 @@ end
 function WhoPulled_Yell(enemy)
 	WhoPulled_SendMsg("YELL",enemy);
 end
-function WhoPulled_Raid(enemy)
+function WhoPulled_Raid(enemy) -- needs check if in a raid
 	WhoPulled_SendMsg("RAID",enemy);
 end
-function WhoPulled_Party(enemy)
+function WhoPulled_Party(enemy) -- needs checks to force /i if not in a real party, and default chat frame if not in a party at all
 	WhoPulled_SendMsg("PARTY",enemy);
 end
-function WhoPulled_BG(enemy)
+function WhoPulled_BG(enemy) -- needs check if in a bg
 	WhoPulled_SendMsg("BATTLEGROUND",enemy);
 end
-function WhoPulled_Guild(enemy)
+function WhoPulled_Guild(enemy) -- needs check if in a guild
 	WhoPulled_SendMsg("GUILD",enemy);
 end
-function WhoPulled_Officer(enemy)
+function WhoPulled_Officer(enemy) -- needs check if in a guild and if officer chat is available (if such check is even possible)
 	WhoPulled_SendMsg("OFFICER",enemy);
 end
-function WhoPulled_RaidWarning(enemy)
+function WhoPulled_RaidWarning(enemy) -- needs check if in a raid
 	WhoPulled_SendMsg("RAID_WARNING",enemy);
 end
 function WhoPulled_Me(enemy)

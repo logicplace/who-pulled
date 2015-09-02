@@ -26,7 +26,9 @@ do it with a pet. There are many surrounding features as well:
  * In-game help file with /wp help An example of /wp help [topic] for
    those confused would be /wp help silent or /wp help ywho
  * Automatically adds tank whether in LFD group or in raid when marked as MainTank.
+    If for some reason it doesn't recognize the tank, type /wp tanks
  * Removes tank from the list when demoted from MainTank.
 
+
 Thanks to Aierre for making me fall in love with this addon enough that I can't
-live without it.
+live without it - qod

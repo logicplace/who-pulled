@@ -16,7 +16,7 @@
 				self:RegisterEvent("PLAYER_ENTERING_WORLD");
 				self:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED");
 				self:RegisterEvent("PLAYER_REGEN_ENABLED");
-				self:RegisterEvent("PARTY_MEMBERS_CHANGED");
+				self:RegisterEvent("GROUP_ROSTER_UPDATE");
 				self:RegisterEvent("PARTY_INVITE_REQUEST");
 				self:RegisterEvent("RAID_INSTANCE_WELCOME");
 				hooksecurefunc("LeaveParty",WhoPulled_OnLeaveParty);
@@ -28,7 +28,7 @@
 					WhoPulled_World();
 				elseif(event == "PLAYER_REGEN_ENABLED") then
 					WhoPulled_ClearPulledList();
-				elseif(event == "PARTY_MEMBERS_CHANGED") then
+				elseif(event == "GROUP_ROSTER_UPDATE") then
 					WhoPulled_ScanForPets();
 					WhoPulled_ScanMembers();
 				elseif(event == "RAID_INSTANCE_WELCOME") then
