@@ -19,7 +19,11 @@
 				self:RegisterEvent("GROUP_ROSTER_UPDATE");
 				self:RegisterEvent("PARTY_INVITE_REQUEST");
 				self:RegisterEvent("RAID_INSTANCE_WELCOME");
-				hooksecurefunc("LeaveParty",WhoPulled_OnLeaveParty);
+				if C_PartyInfo then
+					hooksecurefunc(C_PartyInfo,"LeaveParty",WhoPulled_OnLeaveParty);
+				else
+					hooksecurefunc("LeaveParty",WhoPulled_OnLeaveParty);
+				end
 			</OnLoad>
 			<OnEvent>
 				if(event == "COMBAT_LOG_EVENT_UNFILTERED") then
