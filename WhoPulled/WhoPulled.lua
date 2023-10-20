@@ -62,10 +62,10 @@ do
 	btnNoReportMsg:SetScript("OnClick", function(frame)
 		local tick = frame:GetChecked()
 		if tick then
-			PlaySound("igMainMenuOptionCheckBoxOn")
+			PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON)
 			WhoPulled_Silent()
 		else
-			PlaySound("igMainMenuOptionCheckBoxOff")
+			PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF)
 			WhoPulled_Silent()
 		end
 	end)
@@ -87,10 +87,10 @@ do
 	btnYellReport:SetScript("OnClick", function(frame)
 		local tick = frame:GetChecked()
 		if tick then
-			PlaySound("igMainMenuOptionCheckBoxOn")
+			PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON)
 			WhoPulled_Settings["yonboss"] = true
 		else
-			PlaySound("igMainMenuOptionCheckBoxOff")
+			PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF)
 			WhoPulled_Settings["yonboss"] = false
 		end
 	end)
@@ -112,10 +112,10 @@ do
 	btnRWReport:SetScript("OnClick", function(frame)
 		local tick = frame:GetChecked()
 		if tick then
-			PlaySound("igMainMenuOptionCheckBoxOn")
+			PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON)
 			WhoPulled_Settings["rwonboss"] = true
 		else
-			PlaySound("igMainMenuOptionCheckBoxOff")
+			PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF)
 			WhoPulled_Settings["rwonboss"] = false
 		end
 	end)
@@ -203,7 +203,7 @@ do
 
 	IgnoreScrollArea:SetScrollChild(IgnoreEditBox)
 	
-	local WPIgnoreBackdrop = CreateFrame("Frame", "IgnoreBackdrop", WhoPulledOpt)
+	local WPIgnoreBackdrop = CreateFrame("Frame", "IgnoreBackdrop", WhoPulledOpt, BackdropTemplateMixin and "BackdropTemplate")
 	WPIgnoreBackdrop:SetBackdrop({bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
 		edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
 		tile = true, tileSize = 16, edgeSize = 16,
@@ -422,6 +422,7 @@ function WhoPulled_IgnoreddSpell(spell)
 end
 
 function WhoPulled_CheckWho(...)
+	if select("#", ...) == 0 then return WhoPulled_CheckWho(CombatLogGetCurrentEventInfo()) end
 	local time,event,hidecaster,sguid,sname,sflags,sraidflags,dguid,dname,dflags,draidflags,arg1,arg2,arg3,itype;
 	
 	if(IsInInstance()) then
