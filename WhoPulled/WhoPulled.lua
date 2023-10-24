@@ -1,12 +1,11 @@
-WhoPulled_GUIDs = {}; 
-WhoPulled_MobToPlayer = {};
-WhoPulled_LastMob = "";
-WhoPulled_PetsToMaster = {};
-WhoPulled_Tanks = "";
+local WhoPulled_GUIDs = {};
+local WhoPulled_MobToPlayer = {};
+local WhoPulled_LastMob = "";
+local WhoPulled_PetsToMaster = {};
+local WhoPulled_Tanks = "";
 WhoPulled_RageList = {};
-WhoPulled_NotifiedOf = {};
+local WhoPulled_NotifiedOf = {};
 WhoPulled_Settings = {};
-WhoPulled_RageList = {};
 WhoPulled_Ignore = {};
 WhoPulled_Ignored = {
 	"Adder",
@@ -221,7 +220,7 @@ end
 
 
 
-function WhoPulled_PullBlah(wplayer,enemy,msg)
+local function WhoPulled_PullBlah(wplayer,enemy,msg)
 	local iggy = 1;
 	if(GetNumGroupMembers(LE_PARTY_CATEGORY_HOME) > 0) or (GetNumGroupMembers(LE_PARTY_CATEGORY_INSTANCE) > 0) then -- added to make it silent when soloing no matter what(qod)
 		if(not WhoPulled_GUIDs[enemy[1]]) then
@@ -263,7 +262,7 @@ function WhoPulled_PullBlah(wplayer,enemy,msg)
 	end
 end
 
-function WhoPulled_GetPetOwner(pet)
+local function WhoPulled_GetPetOwner(pet)
 	if(WhoPulled_PetsToMaster[pet]) then return WhoPulled_PetsToMaster[pet]; end
 	if(UnitInRaid("player")) then
 		for i=1,40,1 do
@@ -414,7 +413,7 @@ function WhoPulled_OnLeaveParty()
 	wipe(WhoPulled_NotifiedOf);
 end
 
-function WhoPulled_IgnoreddSpell(spell)
+local function WhoPulled_IgnoreddSpell(spell)
 	if(spell == "Hunter's Mark" or spell == "Sap" or spell == "Soothe") then
 		return true;
 	end
@@ -475,13 +474,13 @@ function WhoPulled_GetNameServ(combo)
 	return wpname,wpserv;
 end
 
-function WhoPulled_NameOrTarget(combo)
+local function WhoPulled_NameOrTarget(combo)
 	if(wpname == "%t") then return UnitName("playertarget");
 	else return combo;
 	end
 end
 
-function WhoPulled_CLI(line)
+local function WhoPulled_CLI(line)
 	if line == "" then
 		InterfaceOptionsFrame_OpenToCategory("WhoPulled")
 	end
@@ -652,7 +651,7 @@ function WhoPulled_CLI(line)
 	end
 end
 
-function WhoPulled_SendMsg(chat,enemy)
+local function WhoPulled_SendMsg(chat,enemy)
 	local msg,player;
 	if enemy == "" then enemy = WhoPulled_LastMob; end
 	player = WhoPulled_MobToPlayer[enemy];
@@ -697,21 +696,21 @@ function WhoPulled_Me(enemy)
 	WhoPulled_SendMsg("ECHO",enemy);
 end
 
-function WhoPulled_YoB()
+local function WhoPulled_YoB()
 	WhoPulled_Settings["yonboss"] = not WhoPulled_Settings["yonboss"];
 	if(WhoPulled_Settings["yonboss"]) then DEFAULT_CHAT_FRAME:AddMessage("Automatic yell who pulled a boss: on");
 	else DEFAULT_CHAT_FRAME:AddMessage("Automatic yell who pulled a boss: off");
 	end
 end
 
-function WhoPulled_Silent()
+local function WhoPulled_Silent()
 	WhoPulled_Settings["silent"] = not WhoPulled_Settings["silent"];
 	if(WhoPulled_Settings["silent"]) then DEFAULT_CHAT_FRAME:AddMessage("Silent mode: on");
 	else DEFAULT_CHAT_FRAME:AddMessage("Silent mode: off");
 	end
 end
 
-function WhoPulled_Options()
+local function WhoPulled_Options()
 	InterfaceOptionsFrame_OpenToCategory("WhoPulled?");
 end
 
